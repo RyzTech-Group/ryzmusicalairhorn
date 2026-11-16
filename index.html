@@ -1604,13 +1604,33 @@ html body .cview,html body #pv{inset:auto;left:0;right:0;top:var(--vvt,0px);heig
             "<div class=\"pv\" id=\"pv\" aria-hidden=\"true\">",
             "<div class=\"pv-top\"><button class=\"pv-x\" id=\"pvX\" type=\"button\" aria-label=\"Tutup\">" + N_IC_X + "</button></div>",
             "<div class=\"pv-img\"><img id=\"pvImg\" alt=\"\"></div>",
-            "<div class=\"pv-row\"><div class=\"pv-cap\"><span class=\"pv-capic\">" + ki + "</span><input type=\"text\" id=\"pvCap\" maxlength=\"200\" placeholder=\"Tambah keterangan...\" autocomplete=\"off\" enterkeyhint=\"send\"></div><button class=\"pv-send\" id=\"pvSend\" type=\"button\" aria-label=\"Kirim\">" + N_IC_SEND + "</button></div>",
+            "<div class=\"pv-row\"><div class=\"pv-em\" id=\"pvEm\"></div><div class=\"pv-cap\"><button class=\"pv-capic\" id=\"pvEmo\" type=\"button\" aria-label=\"Emoji\">" + ki + "</button><input type=\"text\" id=\"pvCap\" maxlength=\"200\" placeholder=\"Tambah keterangan...\" autocomplete=\"off\" enterkeyhint=\"send\"></div><button class=\"pv-send\" id=\"pvSend\" type=\"button\" aria-label=\"Kirim\">" + N_IC_SEND + "</button></div>",
             "</div>"
         ].join("");
     }
     function pvTargets() { return Object.keys(pvSel).filter(function (k) { return pvSel[k]; }); }
     function pvName(k) { return k === N ? z() : jt(k); }
+    function pvEmClose() { var p = s("pvEm"); p && p.classList.remove("show"); var b = s("pvEmo"); b && b.classList.remove("on"); }
+    function pvEmToggle() {
+        var p = s("pvEm");
+        if (!p.firstChild) {
+            var f = document.createDocumentFragment();
+            xi.forEach(function (i) { var a = String.fromCodePoint(i) + (i < 0x10000 ? "\ufe0f" : ""), r = v("button", "", a); r.type = "button", r.setAttribute("data-e", a), f.appendChild(r); }), p.appendChild(f);
+        }
+        var on = !p.classList.contains("show");
+        p.classList.toggle("show", on), s("pvEmo").classList.toggle("on", on);
+    }
+    function pvEmAdd(x) {
+        var e = s("pvCap"), n = e.selectionStart, i = e.selectionEnd;
+        n == null && (n = e.value.length, i = n);
+        var a = e.value.slice(0, n) + x + e.value.slice(i);
+        if (a.length > e.maxLength) return;
+        e.value = a;
+        var r = n + x.length;
+        try { e.setSelectionRange(r, r); } catch { }
+    }
     function pvOpen(url) {
+        pvEmClose();
         if (!l || !d) return;
         pvData = url, pvSel = {}, pvSel[l.group ? N : l.uid] = !0;
         s("pvImg").src = url, s("pvCap").value = "";
@@ -1619,7 +1639,7 @@ html body .cview,html body #pv{inset:auto;left:0;right:0;top:var(--vvt,0px);heig
     }
     function pvClose() {
         var e = s("pv");
-        e.classList.remove("show"), e.setAttribute("aria-hidden", "true"), s("pvCap").blur(), pvData = "";
+        e.classList.remove("show"), e.setAttribute("aria-hidden", "true"), s("pvCap").blur(), pvEmClose(), pvData = "";
         setTimeout(function () { s("pv").classList.contains("show") || s("pvImg").removeAttribute("src"); }, 560);
     }
     function pvSendTo(k, img, cap) {
@@ -1656,6 +1676,11 @@ html body .cview,html body #pv{inset:auto;left:0;right:0;top:var(--vvt,0px);heig
         s("pvX").addEventListener("click", pvClose);
         s("pvSend").addEventListener("click", pvSend);
         s("pvSend").addEventListener("pointerdown", function (e) { e.preventDefault(); });
+        s("pvEmo").addEventListener("pointerdown", function (e) { e.preventDefault(); });
+        s("pvEmo").addEventListener("click", pvEmToggle);
+        s("pvEm").addEventListener("pointerdown", function (e) { e.preventDefault(); });
+        s("pvEm").addEventListener("click", function (e) { var b = e.target.closest ? e.target.closest("button[data-e]") : null; b && pvEmAdd(b.getAttribute("data-e")); });
+        document.addEventListener("pointerdown", function (e) { var p = s("pvEm"); p && p.classList.contains("show") && !p.contains(e.target) && !(e.target.closest && e.target.closest("#pvEmo")) && pvEmClose(); }, !0);
         s("pvCap").addEventListener("keydown", function (e) { e.key === "Enter" && !e.isComposing && (e.preventDefault(), pvSend()); });
     }
     function ryzPersist() {
@@ -2053,15 +2078,21 @@ html body .cv-pill .rp-in{transition:padding .5s cubic-bezier(.32,.72,0,1)}
 html body .pv-row{position:relative;z-index:2;flex:none;display:flex;align-items:center;gap:10px;margin:-76px 14px 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 html body .pv-row .pv-cap{flex:1;min-width:0;margin:0}
 html body .pv-row .pv-send{flex:none}
-html body .pv{border-radius:26px;overflow:hidden;transform:translate3d(0,56px,0) scale(.94);transition:opacity .34s ease,transform .5s cubic-bezier(.32,.72,0,1),border-radius .5s cubic-bezier(.32,.72,0,1),visibility 0s linear .5s}
-html body .pv.show{border-radius:0;transform:none;transition:opacity .3s ease,transform .5s cubic-bezier(.32,.72,0,1),border-radius .5s cubic-bezier(.32,.72,0,1),visibility 0s}
-html body .cam button,html body .pv button,html body .pvr button{-webkit-tap-highlight-color:transparent;transition:transform .45s cubic-bezier(.34,1.56,.64,1),background-color .25s ease,filter .25s ease,opacity .25s ease}
-html body .cam button.prs,html body .pv button.prs,html body .pvr button.prs{transform:scale(.84);filter:brightness(.82);transition-duration:.09s,.09s,.09s,.09s}
-html body .cam .cam-shot.prs{transform:scale(.93);filter:none}
+html body .pv-capic{padding:0;border:0;background:none;cursor:pointer;color:#e8edf2}
+html body .pv-capic.on{color:var(--accent)}
+html body .pv-em{position:absolute;left:0;bottom:calc(100% + 12px);width:292px;max-width:calc(100vw - 28px);max-height:232px;overflow-y:auto;overscroll-behavior:contain;padding:8px;box-sizing:border-box;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-radius:22px;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 14px 34px #0000004d;opacity:0;visibility:hidden;transform:translate3d(0,12px,0) scale(.94);transform-origin:0 100%;transition:opacity .2s ease,transform .34s cubic-bezier(.32,.72,0,1),visibility 0s linear .34s}
+html body .pv-em.show{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+html body .pv-em button{height:48px;padding:0;border:0;border-radius:12px;background:none;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+html body .pv-em button .emo{width:30px;height:30px;vertical-align:middle}
+html body .pv{transform:translate3d(0,40px,0) scale(.97);transition:opacity .3s ease,transform .42s cubic-bezier(.32,.72,0,1),visibility 0s linear .42s}
+html body .pv.show{transform:none;transition:opacity .28s ease,transform .42s cubic-bezier(.32,.72,0,1),visibility 0s}
+html body .cam button,html body .pv button{-webkit-tap-highlight-color:transparent;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+html body .cam button.prs,html body .pv button.prs{transform:scale(.86);transition-duration:.09s}
+html body .cam .cam-shot.prs{transform:scale(.93)}
 html body .cam .cam-shot.prs i{transform:scale(.78)}
 html body .cam .cam-shot i{transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
 html body .cam .cam-gal.prs{transform:scale(.88)}
-html body .pv .pv-send.prs{transform:scale(.86);filter:brightness(.85)}
+html body .pv .pv-send.prs{transform:scale(.86)}
 .eye{-webkit-tap-highlight-color:transparent}
 .eye svg{overflow:visible}
 .eye svg .eyeg{transform-box:fill-box;transform-origin:50% 50%}
@@ -2073,7 +2104,7 @@ html body .pv .pv-send.prs{transform:scale(.86);filter:brightness(.85)}
 @keyframes eyePop{0%{scale:1}35%{scale:.82}100%{scale:1}}
 #au .aw{translate:0 0;transition:translate .55s cubic-bezier(.32,.72,0,1)}
 </style><script>(function(){
-var SEL=".cam button,.pv button,.pvr button",cur=null,t0=0,tm=0;
+var SEL=".cam button,.pv button",cur=null,t0=0,tm=0;
 function clr(){if(!cur)return;var b=cur,w=Math.max(0,120-(performance.now()-t0));clearTimeout(tm);tm=setTimeout(function(){b.classList.remove("prs")},w);cur=null}
 document.addEventListener("pointerdown",function(e){var b=e.target.closest&&e.target.closest(SEL);if(!b)return;if(cur)cur.classList.remove("prs");clearTimeout(tm);cur=b;t0=performance.now();b.classList.add("prs")},true);
 ["pointerup","pointercancel","dragend"].forEach(function(n){document.addEventListener(n,clr,true)});
