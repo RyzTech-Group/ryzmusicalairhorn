@@ -1604,55 +1604,23 @@ html body .cview,html body #pv{inset:auto;left:0;right:0;top:var(--vvt,0px);heig
             "<div class=\"pv\" id=\"pv\" aria-hidden=\"true\">",
             "<div class=\"pv-top\"><button class=\"pv-x\" id=\"pvX\" type=\"button\" aria-label=\"Tutup\">" + N_IC_X + "</button></div>",
             "<div class=\"pv-img\"><img id=\"pvImg\" alt=\"\"></div>",
-            "<div class=\"pv-cap\"><span class=\"pv-capic\">" + N_IC_IMG + "</span><input type=\"text\" id=\"pvCap\" maxlength=\"200\" placeholder=\"Tambah keterangan...\" autocomplete=\"off\" enterkeyhint=\"send\"></div>",
-            "<div class=\"pv-bar\"><button class=\"pv-to\" id=\"pvTo\" type=\"button\"><span id=\"pvToT\"></span></button><button class=\"pv-send\" id=\"pvSend\" type=\"button\" aria-label=\"Kirim\">" + N_IC_SEND + "</button></div>",
-            "</div>",
-            "<div class=\"pvr\" id=\"pvr\" aria-hidden=\"true\"><div class=\"pvr-bg\" id=\"pvrBg\"></div><div class=\"pvr-sheet\"><div class=\"pvr-h\"><b>Kirim ke</b><button type=\"button\" id=\"pvrDone\">Selesai</button></div><input type=\"text\" class=\"pvr-find\" id=\"pvrFind\" placeholder=\"Cari nama...\" autocomplete=\"off\"><div class=\"pvr-list\" id=\"pvrList\"></div></div></div>"
+            "<div class=\"pv-row\"><div class=\"pv-cap\"><span class=\"pv-capic\">" + ki + "</span><input type=\"text\" id=\"pvCap\" maxlength=\"200\" placeholder=\"Tambah keterangan...\" autocomplete=\"off\" enterkeyhint=\"send\"></div><button class=\"pv-send\" id=\"pvSend\" type=\"button\" aria-label=\"Kirim\">" + N_IC_SEND + "</button></div>",
+            "</div>"
         ].join("");
     }
     function pvTargets() { return Object.keys(pvSel).filter(function (k) { return pvSel[k]; }); }
     function pvName(k) { return k === N ? z() : jt(k); }
-    function pvChip() {
-        var ks = pvTargets();
-        s("pvToT").textContent = ks.length ? "@" + pvName(ks[0]) + (ks.length > 1 ? " +" + (ks.length - 1) : "") : "Pilih penerima";
-    }
     function pvOpen(url) {
         if (!l || !d) return;
         pvData = url, pvSel = {}, pvSel[l.group ? N : l.uid] = !0;
-        s("pvImg").src = url, s("pvCap").value = "", pvChip();
+        s("pvImg").src = url, s("pvCap").value = "";
         var e = s("pv");
         e.classList.add("show"), e.setAttribute("aria-hidden", "false");
     }
-    function pvrClose() { var e = s("pvr"); e && (e.classList.remove("show"), e.setAttribute("aria-hidden", "true"), s("pvrFind").blur()); }
     function pvClose() {
         var e = s("pv");
-        e.classList.remove("show"), e.setAttribute("aria-hidden", "true"), s("pvCap").blur(), pvrClose(), pvData = "";
+        e.classList.remove("show"), e.setAttribute("aria-hidden", "true"), s("pvCap").blur(), pvData = "";
         setTimeout(function () { s("pv").classList.contains("show") || s("pvImg").removeAttribute("src"); }, 560);
-    }
-    function pvrRender() {
-        var list = s("pvrList"), q = (s("pvrFind").value || "").trim().toLowerCase().replace(/^@/, ""), frag = document.createDocumentFragment();
-        list.textContent = "";
-        function row(k, nm, g) {
-            if (q && nm.toLowerCase().indexOf(q) < 0) return;
-            var b = v("button", "pvr-row" + (pvSel[k] ? " on" : ""));
-            b.type = "button", b.setAttribute("data-k", k);
-            var av = v("span", "cav");
-            g ? Kt(av) : (av.setAttribute("data-av", k), K(av, k));
-            var ck = v("span", "pvr-ck");
-            ck.innerHTML = "<svg viewBox=\"0 0 24 24\"><path d=\"M5 13l4 4L19 7\"/></svg>";
-            b.appendChild(av), b.appendChild(v("span", "pvr-nm", nm)), b.appendChild(ck), frag.appendChild(b);
-        }
-        Ct(d.uid) && row(N, z(), !0);
-        M.slice().sort(function (a, b) { return a.p === d.uid ? -1 : b.p === d.uid ? 1 : x[a.p].u.toLowerCase().localeCompare(x[b.p].u.toLowerCase()); }).forEach(function (a) { row(a.p, jt(a.p), !1); });
-        list.appendChild(frag);
-        Array.prototype.forEach.call(list.querySelectorAll("img"), function (m) { m.decoding = "async"; });
-        list.firstChild || list.appendChild(v("div", "pvr-none", "Tidak ada yang cocok"));
-    }
-    function pvrOpen() {
-        if (!d) return;
-        s("pvrFind").value = "", pvrRender();
-        var e = s("pvr");
-        e.classList.add("show"), e.setAttribute("aria-hidden", "false");
     }
     function pvSendTo(k, img, cap) {
         if (k === N) {
@@ -1686,87 +1654,9 @@ html body .cview,html body #pv{inset:auto;left:0;right:0;top:var(--vvt,0px);heig
     }
     function pvWire() {
         s("pvX").addEventListener("click", pvClose);
-        s("pvTo").addEventListener("click", pvrOpen);
         s("pvSend").addEventListener("click", pvSend);
         s("pvSend").addEventListener("pointerdown", function (e) { e.preventDefault(); });
         s("pvCap").addEventListener("keydown", function (e) { e.key === "Enter" && !e.isComposing && (e.preventDefault(), pvSend()); });
-        s("pvrBg").addEventListener("click", pvrClose);
-        s("pvrDone").addEventListener("click", pvrClose);
-        s("pvrFind").addEventListener("input", pvrRender);
-        s("pvrList").addEventListener("click", function (e) {
-            var r = e.target.closest ? e.target.closest(".pvr-row") : null;
-            if (!r) return;
-            var k = r.getAttribute("data-k");
-            pvSel[k] ? delete pvSel[k] : pvSel[k] = !0;
-            r.classList.toggle("on", !!pvSel[k]), pvChip();
-        });
-        pvGesture();
-    }
-    function pvGesture() {
-        var pvr = s("pvr"), sheet = pvr.querySelector(".pvr-sheet"), bg = s("pvrBg"), list = s("pvrList"), bar = s("pv").querySelector(".pv-bar"), st = null;
-        function isOpen() { return pvr.classList.contains("show"); }
-        function sheetH() { return sheet.offsetHeight || 1; }
-        function paint(y) {
-            var h = sheetH();
-            y = Math.max(0, Math.min(h, y));
-            sheet.style.transition = "none", bg.style.transition = "none";
-            sheet.style.transform = "translate3d(0," + y + "px,0)";
-            bg.style.opacity = String(1 - y / h);
-            return y;
-        }
-        function settle(open) {
-            sheet.style.transition = "", bg.style.transition = "";
-            void sheet.offsetHeight;
-            sheet.style.transform = "", bg.style.opacity = "";
-            if (open) { pvr.classList.add("show"), pvr.setAttribute("aria-hidden", "false"); }
-            else { pvr.classList.remove("show"), pvr.setAttribute("aria-hidden", "true"), s("pvrFind").blur(); }
-            pvr.classList.remove("drg");
-        }
-        function track(t) {
-            var n = Date.now();
-            st.v = (t.clientY - st.ly) / Math.max(1, n - st.lt), st.ly = t.clientY, st.lt = n;
-        }
-        pvr.addEventListener("touchstart", function (e) {
-            if (!isOpen() || e.touches.length !== 1) return;
-            var t = e.touches[0];
-            st = { k: "c", x: t.clientX, y: t.clientY, ly: t.clientY, lt: Date.now(), v: 0, m: 0, cur: 0, inList: !!(e.target.closest && e.target.closest("#pvrList")) };
-        }, { passive: true });
-        bar.addEventListener("touchstart", function (e) {
-            if (isOpen() || !d || e.touches.length !== 1 || (e.target.closest && e.target.closest("#pvSend"))) return;
-            var t = e.touches[0];
-            st = { k: "o", x: t.clientX, y: t.clientY, ly: t.clientY, lt: Date.now(), v: 0, m: 0, cur: 0 };
-        }, { passive: true });
-        function move(e) {
-            if (!st) return;
-            var t = e.touches[0], dy = t.clientY - st.y, dx = t.clientX - st.x;
-            if (!st.m) {
-                if (Math.abs(dy) < 6 && Math.abs(dx) < 6) return;
-                if (Math.abs(dx) > Math.abs(dy)) { st = null; return; }
-                if (st.k === "c" && (dy < 0 || (st.inList && list.scrollTop > 0))) { st = null; return; }
-                if (st.k === "o" && dy > 0) { st = null; return; }
-                st.m = 1, st.y = t.clientY, st.ly = t.clientY, st.lt = Date.now(), dy = 0;
-                if (st.k === "o") { s("pvrFind").value = "", pvrRender(), pvr.classList.add("drg"), sheet.style.transition = "none", sheet.style.transform = "translate3d(0," + sheetH() + "px,0)"; }
-                else s("pvrFind").blur();
-            }
-            if (e.cancelable) e.preventDefault();
-            track(t);
-            st.cur = st.k === "c" ? paint(dy) : paint(sheetH() + dy);
-        }
-        function end() {
-            if (!st) return;
-            var q = st;
-            st = null;
-            if (!q.m) return;
-            var h = sheetH();
-            if (q.k === "c") settle(!(q.v > .45 || q.cur > h * .3));
-            else settle(q.v < -.45 || q.cur < h * .72);
-            bar.__drag = Date.now();
-        }
-        pvr.addEventListener("touchmove", move, { passive: false });
-        bar.addEventListener("touchmove", move, { passive: false });
-        document.addEventListener("touchend", end, true);
-        document.addEventListener("touchcancel", end, true);
-        bar.addEventListener("click", function (e) { if (bar.__drag && Date.now() - bar.__drag < 400) { e.stopPropagation(), e.preventDefault(); } }, true);
     }
     function ryzPersist() {
         window.ryzChatState = function () { return l ? l.group ? { g: 1 } : { u: l.uid } : null; };
@@ -2155,28 +2045,23 @@ else {
 </script><script>(function(){var v=window.visualViewport,r=document.documentElement,raf=0,tm=0,syn=0;function fit(){raf=0;var h=v?v.height:window.innerHeight,t=v?v.offsetTop:0;r.style.setProperty("--vvh",h+"px");r.style.setProperty("--vvt",t+"px");var o=document.querySelector(".cview.open .cv-body");if(o&&document.activeElement&&document.activeElement.id==="cvIn"){o.scrollTop=o.scrollHeight}}function sync(){tm=0;if(document.activeElement&&/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))return;var m=document.body.className.match(/tab-(prod|cart|chat|acc)/),i={prod:1,cart:2,chat:3,acc:4}[m&&m[1]]||0;syn=1;try{window.dispatchEvent(new Event("resize"));window.ryzTab&&window.ryzTab(i,true)}catch(e){}syn=0}function later(){clearTimeout(tm);tm=setTimeout(sync,450)}function q(){if(syn)return;raf||(raf=requestAnimationFrame(fit));later()}if(v){v.addEventListener("resize",q);v.addEventListener("scroll",q)}window.addEventListener("resize",q);window.addEventListener("orientationchange",q);window.addEventListener("pageshow",later);document.addEventListener("visibilitychange",function(){document.hidden||later()});document.addEventListener("transitionend",function(e){var t=e.target;t&&t.classList&&(t.id==="pv"||t.classList.contains("cview"))&&later()},true);fit()})();</script><style>
 html body .cview:after{content:"";position:absolute;left:0;right:0;top:100%;height:100vh;background:#fff;pointer-events:none}
 html[data-theme=dark] body .cview:after{background:var(--card)}
-html body .cv-pill .rp-bar{display:grid;grid-template-rows:0fr;max-height:none;padding:0 8px;opacity:0;visibility:hidden;transform:translate3d(0,14px,0) scale(.96);transform-origin:50% 100%;transition:grid-template-rows .5s cubic-bezier(.32,.72,0,1),padding .5s cubic-bezier(.32,.72,0,1),opacity .32s ease,transform .5s cubic-bezier(.32,.72,0,1),visibility 0s linear .5s}
-html body .cv-pill .rp-bar.show{grid-template-rows:1fr;max-height:none;padding:8px 8px 2px;opacity:1;visibility:visible;transform:none;transition-delay:0s}
+html body .cv-pill .rp-bar{display:grid;grid-template-rows:minmax(0,0fr);max-height:none;padding:0 8px;opacity:0;visibility:hidden;transform:translate3d(0,14px,0) scale(.96);transform-origin:50% 100%;transition:grid-template-rows .5s cubic-bezier(.32,.72,0,1),padding .5s cubic-bezier(.32,.72,0,1),opacity .32s ease,transform .5s cubic-bezier(.32,.72,0,1),visibility 0s linear .5s}
+html body .cv-pill .rp-bar.show{grid-template-rows:minmax(0,1fr);max-height:none;padding:8px 8px 2px;opacity:1;visibility:visible;transform:none;transition-delay:0s}
 html body .cv-pill .rp-in{min-height:0}
+html body .cv-pill .rp-bar:not(.show) .rp-in{padding-top:0;padding-bottom:0}
+html body .cv-pill .rp-in{transition:padding .5s cubic-bezier(.32,.72,0,1)}
+html body .pv-row{position:relative;z-index:2;flex:none;display:flex;align-items:center;gap:10px;margin:-76px 14px 0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+html body .pv-row .pv-cap{flex:1;min-width:0;margin:0}
+html body .pv-row .pv-send{flex:none}
 html body .pv{border-radius:26px;overflow:hidden;transform:translate3d(0,56px,0) scale(.94);transition:opacity .34s ease,transform .5s cubic-bezier(.32,.72,0,1),border-radius .5s cubic-bezier(.32,.72,0,1),visibility 0s linear .5s}
 html body .pv.show{border-radius:0;transform:none;transition:opacity .3s ease,transform .5s cubic-bezier(.32,.72,0,1),border-radius .5s cubic-bezier(.32,.72,0,1),visibility 0s}
-html body .pvr-sheet{transition:transform .5s cubic-bezier(.32,.72,0,1)}
-html body .pvr-bg{transition:opacity .4s ease}
-html body .pvr.drg{visibility:visible;transition:none}
-html body .pvr-sheet:before{content:"";position:absolute;left:50%;top:8px;width:42px;height:4px;margin-left:-21px;border-radius:2px;background:var(--muted);opacity:.45;pointer-events:none}
-html body .pv-bar,html body .pvr-h,html body .pvr-bg{touch-action:none}
-html body .pvr-list{contain:layout style}
-html body .pvr-row{content-visibility:auto;contain-intrinsic-size:auto 62px}
 html body .cam button,html body .pv button,html body .pvr button{-webkit-tap-highlight-color:transparent;transition:transform .45s cubic-bezier(.34,1.56,.64,1),background-color .25s ease,filter .25s ease,opacity .25s ease}
 html body .cam button.prs,html body .pv button.prs,html body .pvr button.prs{transform:scale(.84);filter:brightness(.82);transition-duration:.09s,.09s,.09s,.09s}
 html body .cam .cam-shot.prs{transform:scale(.93);filter:none}
 html body .cam .cam-shot.prs i{transform:scale(.78)}
 html body .cam .cam-shot i{transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
 html body .cam .cam-gal.prs{transform:scale(.88)}
-html body .pv .pv-to.prs{transform:scale(.95)}
 html body .pv .pv-send.prs{transform:scale(.86);filter:brightness(.85)}
-html body .pvr .pvr-row.prs{transform:scale(.975);background:var(--tile);filter:none}
-html body .pvr .pvr-h button.prs{transform:scale(.9);filter:none;opacity:.7}
 .eye{-webkit-tap-highlight-color:transparent}
 .eye svg{overflow:visible}
 .eye svg .eyeg{transform-box:fill-box;transform-origin:50% 50%}
